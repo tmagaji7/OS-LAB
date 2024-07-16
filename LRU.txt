@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_FRAMES 3
+
+bool isInFrames(int frames[], int page, int num_frames) {
+    for (int i = 0; i < num_frames; ++i) {
+        if (frames[i] == page) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void displayFrames(int frames[], int num_frames) {
+    printf("Current frames: ");
+    for (int i = 0; i < num_frames; ++i) {
+        if (frames[i] == -1) {
+            printf("[ ] ");
+        } else {
+            printf("[%d] ", frames[i]);
+        }
+    }
+    printf("\n");
+}
+
+void updateLRU(int frames[], int lru[], int num_frames, int index) {
+    for (int i = 0; i < num_frames; ++i) {
+        if (i != index) {
+            lru[i]++;
+        } else {
+            lru[i] = 0;
+        }
+    }
+}
+
+int findLRUIndex(int lru[], int num_frames) {
+    int max = lru[0];
+    int index = 0;
+    for (int i = 1; i < num_frames; ++i) {
+        if (lru[i] > max) {
+            max = lru[i];
+            index = i;
+        }
+    }
+    return index;
+}
+
+int main() {
+    int pages[100];
+    int num_pages;
+    int frames[MAX_FRAMES];
+    int lru[MAX_FRAMES];
+    int num_frames = 0;
+    int page_faults = 0;
+
+    for (int i = 0; i < MAX_FRAMES; ++i) {
+        frames[i] = -1;
+        lru[i] = 0;
+    }
+
+    printf("Enter number of pages: ");
+    scanf("%d", &num_pages);
+
+    printf("Enter the page sequence:\n");
+    for (int i = 0; i < num_pages; ++i) {
+        scanf("%d", &pages[i]);
+    }
+
+    for (int i = 0; i < num_pages; ++i) {
+        int page = pages[i];
+        
+        if (!isInFrames(frames, page, num_frames)) {
+            if (num_frames < MAX_FRAMES) {
+                frames[num_frames] = page;
+                num_frames++;
+            } else {
+                int lru_index = findLRUIndex(lru, num_frames);
+                frames[lru_index] = page;
+            }
+            page_faults++;
+            updateLRU(frames, lru, num_frames, num_frames - 1);
+            displayFrames(frames, num_frames);
+        } else {
+            printf("Page %d is already in memory.\n", page);
+            updateLRU(frames, lru, num_frames, i);
+            displayFrames(frames, num_frames);
+        }
+    }
+
+    printf("\nTotal page faults: %d\n", page_faults);
+
+    return 0;
+}
